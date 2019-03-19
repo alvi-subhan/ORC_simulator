@@ -1,0 +1,17 @@
+,
+    dash.dependencies.Input('input_2', 'value')
+
+
+,input_2
+
+
+PRESSURE=float(input_2)
+
+
+dff3['H_2'] = dff3['H_1'] + (dff3['H_2_ISENTROPIC'] + dff3['H_1'])/((Pump_Eff / 100)*PRESSURE)
+
+
+
+Notes:
+look for dff, dff2 and dff3
+
