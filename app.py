@@ -12,6 +12,15 @@ import pandas as pd
 import plotly
 import numpy as np
 import urllib
+#impoting CoolProp
+#from __future__ import print_function
+from CoolProp import AbstractState
+from CoolProp.CoolProp import PhaseSI, PropsSI, get_global_param_string
+import CoolProp.CoolProp as CoolProp
+from CoolProp.HumidAirProp import HAPropsSI
+from math import sin
+
+#print(PropsSI('D','P',101325,'T',300,'water'))
 
 app = dash.Dash(__name__)
 server = app.server
@@ -20,7 +29,7 @@ app.title = "ORC Simulator"
 
 
 df = pd.read_csv('refrigerant_data.csv')
-df2 = df[['REFRIGERANT', 'T_1_K', 'T_3_K', 'H_1', 'H_2_ISENTROPIC', 'H_3', 'H_4_ISENTROPIC']]
+df2 = df[['REFRIGERANT', 'T_1_K', 'T_3_K', 'H_1', 'H_2_ISENTROPIC', 'H_3', 'H_4_ISENTROPIC','SPECIFIC_VOLUME']]
 df2 = df2.round(2)
 
 
@@ -86,6 +95,16 @@ tab1_layout = html.Div([
                             style={'max-width': '150px'}
                         ),
 
+    html.Label('Pressure 2 (kPa)',style={'width': '200'}),
+                dcc.Input(
+                            id='input_3',
+                            type='number',
+                            value='12',
+                            min='2',
+                            style={'max-width': '150px'}
+                        ),
+
+
     html.Label(id='pump_temp_value'),
            dcc.Slider(
                         id='slider_1',
@@ -134,9 +153,9 @@ tab1_layout = html.Div([
                         id='table'
                         ),
                     html.A(
-                        'Download Data',
+                        'Download Results',
                         id='download-link',
-                        download="rawdata.csv",
+                        download="ORC_Modelling_Results.csv",
                         href="",
                         target="_blank"
                     ),
@@ -426,38 +445,47 @@ def compute_amount(slider_4):
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
     dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value')
+    dash.dependencies.Input('input_2', 'value'),
+    dash.dependencies.Input('input_3', 'value')
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2):
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
-    dff2 = dff[dff['T_1'] == slider_1]
-    dff3 = dff2[dff2['T_3'] == slider_2]
     MFR = float(input_1)
-    PRESSURE=float(input_2)
+    PRESSURE_1=float(input_2)*1000
+    PRESSURE_2=float(input_3)*1000
+
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
+    x = float(slider_1)
+    y = float(slider_2)
+
+    dff2 = dff
+    dff2 = dff[dff.REFRIGERANT.str.contains('|'.join(dropdown_3))]
+    dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] + (dff3['H_2_ISENTROPIC'] - dff3['H_1'])/(Pump_Eff / 100)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    
     #CALCULATES ENTHALPY AT STATE 4
-    dff3['H_4'] = (dff3['H_3'] - (Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC']))
-
+    dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
+    
     #TURBINE POWER CALCULATION (kW)
-    dff3['Turbine Power (kW)'] = MFR * (dff3['H_3'] - dff3['H_4'])
+    dff3['Turbine Power'] = MFR * (dff3['H_3'] - dff3['H_4'])
 
     #PUMP POWER CALCULATION (kW)
-    dff3['Pump Power (kW)'] = MFR * (dff3['H_2'] - dff3['H_1'])
+    dff3['Pump Power'] = MFR * (dff3['H_2'] - dff3['H_1'])
 
     #NET POWER (kW)
-    dff3['Net Power (kW)'] = dff3['Turbine Power (kW)'] - dff3['Pump Power (kW)']
+    dff3['Net Power'] = dff3['Turbine Power'] - dff3['Pump Power']
 
     #SYSTEM HEAT INPUT
-    dff3['Heat Input (kJ/K)'] = MFR * (dff3['H_3'] - dff3['H_2'])
+    dff3['Heat Input'] = MFR * (dff3['H_3'] - dff3['H_2'])
 
     #THERMAL EFFICIENCY
-    dff3['Efficiency'] = (dff3['Net Power (kW)'] / dff3['Heat Input (kJ/K)']) * 100
+    dff3['Efficiency'] = (dff3['Net Power'] / dff3['Heat Input']) * 100
+
     dff3 = dff3.round(2)
 
     dz1 = dff3[dff3['REFRIGERANT'] == 'R245fa']
@@ -509,39 +537,46 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
     dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value')
+    dash.dependencies.Input('input_2', 'value'),
+    dash.dependencies.Input('input_3', 'value')
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2):
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
-    dff2 = dff[dff['T_1'] == slider_1]
-    dff3 = dff2[dff2['T_3'] == slider_2]
     MFR = float(input_1)
-    PRESSURE=float(input_2)
+    PRESSURE_1=float(input_2)*1000
+    PRESSURE_2=float(input_3)*1000
+
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
+    x = float(slider_1)
+    y = float(slider_2)
+
+    dff2 = dff
+    dff2 = dff[dff.REFRIGERANT.str.contains('|'.join(dropdown_3))]
+    dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] + (dff3['H_2_ISENTROPIC'] + dff3['H_1'])/(Pump_Eff / 100)
-
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    
     #CALCULATES ENTHALPY AT STATE 4
-    dff3['H_4'] = (dff3['H_3'] - (Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC']))
-
+    dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
+    
     #TURBINE POWER CALCULATION (kW)
-    dff3['Turbine Power (kW)'] = MFR * (dff3['H_3'] - dff3['H_4'])
+    dff3['Turbine Power'] = MFR * (dff3['H_3'] - dff3['H_4'])
 
     #PUMP POWER CALCULATION (kW)
-    dff3['Pump Power (kW)'] = MFR * (dff3['H_2'] - dff3['H_1'])
+    dff3['Pump Power'] = MFR * (dff3['H_2'] - dff3['H_1'])
 
     #NET POWER (kW)
-    dff3['Net Power (kW)'] = dff3['Turbine Power (kW)'] - dff3['Pump Power (kW)']
+    dff3['Net Power'] = dff3['Turbine Power'] - dff3['Pump Power']
 
     #SYSTEM HEAT INPUT
-    dff3['Heat Input (kJ/K)'] = MFR * (dff3['H_3'] - dff3['H_2'])
+    dff3['Heat Input'] = MFR * (dff3['H_3'] - dff3['H_2'])
 
     #THERMAL EFFICIENCY
-    dff3['Efficiency'] = (dff3['Net Power (kW)'] / dff3['Heat Input (kJ/K)']) * 100
+    dff3['Efficiency'] = (dff3['Net Power'] / dff3['Heat Input']) * 100
 
     dff3 = dff3.round(2)
 
@@ -572,46 +607,47 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     dash.dependencies.Input('dropdown_3', 'value'),
     dash.dependencies.Input('dropdown_4', 'value'),
     dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value')
+    dash.dependencies.Input('input_2', 'value'),
+    dash.dependencies.Input('input_3', 'value')
 
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4, input_1,input_2):
-
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4, input_1,input_2,input_3):
+    
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
-    PRESSURE=float(input_2)
+    PRESSURE_1=float(input_2)*1000
+    PRESSURE_2=float(input_3)*1000
+
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
     x = float(slider_1)
-    y = dropdown_4
+    y = float(slider_2)
 
     dff2 = dff
-
     dff2 = dff[dff.REFRIGERANT.str.contains('|'.join(dropdown_3))]
-
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] + (dff3['H_2_ISENTROPIC'] + dff3['H_1'])/(Pump_Eff / 100)
-
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
-
+    
     #TURBINE POWER CALCULATION (kW)
-    dff3['Turbine Power (kW)'] = MFR * (dff3['H_3'] - dff3['H_4'])
+    dff3['Turbine Power'] = MFR * (dff3['H_3'] - dff3['H_4'])
 
     #PUMP POWER CALCULATION (kW)
-    dff3['Pump Power (kW)'] = MFR * (dff3['H_2'] - dff3['H_1'])
+    dff3['Pump Power'] = MFR * (dff3['H_2'] - dff3['H_1'])
 
     #NET POWER (kW)
-    dff3['Net Power (kW)'] = dff3['Turbine Power (kW)'] - dff3['Pump Power (kW)']
+    dff3['Net Power'] = dff3['Turbine Power'] - dff3['Pump Power']
 
     #SYSTEM HEAT INPUT
-    dff3['Heat Input (kJ/K)'] = MFR * (dff3['H_3'] - dff3['H_2'])
+    dff3['Heat Input'] = MFR * (dff3['H_3'] - dff3['H_2'])
 
     #THERMAL EFFICIENCY
-    dff3['Thermal Efficiency (%)'] = (dff3['Net Power (kW)'] / dff3['Heat Input (kJ/K)']) * 100
+    dff3['Efficiency'] = (dff3['Net Power'] / dff3['Heat Input']) * 100
 
     dff3 = dff3[dff3['Thermal Efficiency (%)'] > 0]
 
@@ -667,17 +703,19 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
     dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value')
-
+    dash.dependencies.Input('input_2', 'value'),
+    dash.dependencies.Input('input_3', 'value')
     ])
 
-def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2):
+def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
     if dropdown_3 is None:
         return dff3.to_dict('records')
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
-    PRESSURE=float(input_2)
+    PRESSURE_1=float(input_2)*1000
+    PRESSURE_2=float(input_3)*1000
+
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
     x = float(slider_1)
@@ -688,9 +726,11 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] + (dff3['H_2_ISENTROPIC'] + dff3['H_1'])/(Pump_Eff / 100)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
+    
     #TURBINE POWER CALCULATION (kW)
     dff3['Turbine Power'] = MFR * (dff3['H_3'] - dff3['H_4'])
 
@@ -710,15 +750,16 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
 
     dff3 = dff3[dff3['T_1'] == x]
     dff3 = dff3[dff3['T_3'] == y]
-
+    
     dff3['Pump Eff'] = Pump_Eff
     dff3['Turbine Eff'] = Turbine_Eff
     dff3['MFR'] = MFR
-    dff3['Pressure'] = PRESSURE
+    dff3['Pressure_1'] = PRESSURE_1/1000
+    dff3['Pressure_2'] = PRESSURE_2/1000
     dff3 = dff3.round(2)
 
     #
-    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
+    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure_1','Pressure_2', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
 
     dff3 = dff3.round(3)
     #xyz=='checking the global variable'
@@ -737,15 +778,18 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
             dash.dependencies.Input('slider_4', 'value'),
             dash.dependencies.Input('dropdown_3', 'value'),
             dash.dependencies.Input('input_1', 'value'),
-            dash.dependencies.Input('input_2', 'value')
+            dash.dependencies.Input('input_2', 'value'),
+            dash.dependencies.Input('input_3', 'value')
             ])
-def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2):
+def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
     if dropdown_3 is None:
         return dff3.to_dict('records')
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
-    PRESSURE=float(input_2)
+    PRESSURE_1=float(input_2)*1000
+    PRESSURE_2=float(input_3)*1000
+
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
     x = float(slider_1)
@@ -756,9 +800,11 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] + (dff3['H_2_ISENTROPIC'] + dff3['H_1'])/(Pump_Eff / 100)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
+    
     #TURBINE POWER CALCULATION (kW)
     dff3['Turbine Power'] = MFR * (dff3['H_3'] - dff3['H_4'])
 
@@ -778,22 +824,26 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
 
     dff3 = dff3[dff3['T_1'] == x]
     dff3 = dff3[dff3['T_3'] == y]
-
+    
     dff3['Pump Eff'] = Pump_Eff
     dff3['Turbine Eff'] = Turbine_Eff
     dff3['MFR'] = MFR
-    dff3['Pressure'] = PRESSURE
+    dff3['Pressure_1'] = PRESSURE_1/1000
+    dff3['Pressure_2'] = PRESSURE_2/1000
     dff3 = dff3.round(2)
 
     #
-    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
+    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure_1','Pressure_2', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
 
     dff3 = dff3.round(3)
     dff = dff3
-    
+
     csv_string = dff.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8,%EF%BB%BF" + urllib.parse.quote(csv_string)
     return csv_string
+
+
+
 
 
 
@@ -806,46 +856,47 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
     dash.dependencies.Input('dropdown_3', 'value'),
     dash.dependencies.Input('dropdown_5', 'value'),
     dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value')
+    dash.dependencies.Input('input_2', 'value'),
+    dash.dependencies.Input('input_3', 'value')
 
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_5, input_1,input_2):
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_5, input_1,input_2,input_3):
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
-    PRESSURE=float(input_2)
+    PRESSURE_1=float(input_2)*1000
+    PRESSURE_2=float(input_3)*1000
+
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
     x = float(slider_1)
-    y = dropdown_5
+    y = float(slider_2)
 
     dff2 = dff
-
     dff2 = dff[dff.REFRIGERANT.str.contains('|'.join(dropdown_3))]
-
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] + (dff3['H_2_ISENTROPIC'] + dff3['H_1'])/(Pump_Eff / 100)
-
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
-
+    
     #TURBINE POWER CALCULATION (kW)
-    dff3['Turbine Power (kW)'] = MFR * (dff3['H_3'] - dff3['H_4'])
+    dff3['Turbine Power'] = MFR * (dff3['H_3'] - dff3['H_4'])
 
     #PUMP POWER CALCULATION (kW)
-    dff3['Pump Power (kW)'] = MFR * (dff3['H_2'] - dff3['H_1'])
+    dff3['Pump Power'] = MFR * (dff3['H_2'] - dff3['H_1'])
 
     #NET POWER (kW)
-    dff3['Net Power (kW)'] = dff3['Turbine Power (kW)'] - dff3['Pump Power (kW)']
+    dff3['Net Power'] = dff3['Turbine Power'] - dff3['Pump Power']
 
     #SYSTEM HEAT INPUT
-    dff3['Heat Input (kJ/K)'] = MFR * (dff3['H_3'] - dff3['H_2'])
+    dff3['Heat Input'] = MFR * (dff3['H_3'] - dff3['H_2'])
 
     #THERMAL EFFICIENCY
-    dff3['Thermal Efficiency (%)'] = (dff3['Net Power (kW)'] / dff3['Heat Input (kJ/K)']) * 100
+    dff3['Efficiency'] = (dff3['Net Power'] / dff3['Heat Input']) * 100
 
     dff3 = dff3[dff3['Thermal Efficiency (%)'] > 0]
 
