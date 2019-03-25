@@ -12,15 +12,6 @@ import pandas as pd
 import plotly
 import numpy as np
 import urllib
-#impoting CoolProp
-#from __future__ import print_function
-from CoolProp import AbstractState
-from CoolProp.CoolProp import PhaseSI, PropsSI, get_global_param_string
-import CoolProp.CoolProp as CoolProp
-from CoolProp.HumidAirProp import HAPropsSI
-from math import sin
-
-#print(PropsSI('D','P',101325,'T',300,'water'))
 
 app = dash.Dash(__name__)
 server = app.server
@@ -96,6 +87,7 @@ tab1_layout = html.Div([
                         ),
 
     html.Label('Pressure 2 (kPa)',style={'width': '200'}),
+    html.Label('P2 should be > P1',style={'width': '300'}),
                 dcc.Input(
                             id='input_3',
                             type='number',
