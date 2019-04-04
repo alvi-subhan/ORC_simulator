@@ -20,7 +20,7 @@ app.title = "ORC Simulator"
 
 
 df = pd.read_csv('refrigerant_data.csv')
-df2 = df[['REFRIGERANT', 'T_1_K', 'T_3_K', 'H_1', 'H_2_ISENTROPIC', 'H_3', 'H_4_ISENTROPIC','SPECIFIC_VOLUME']]
+df2 = df[['REFRIGERANT', 'T_1_K', 'T_3_K', 'H_1', 'H_2_ISENTROPIC', 'H_3', 'H_4_ISENTROPIC','SPECIFIC_VOLUME','P_1','P_2']]
 df2 = df2.round(2)
 
 
@@ -76,26 +76,6 @@ tab1_layout = html.Div([
                             min='1',
                             style={'max-width': '150px'}
                         ),
-
-    html.Label('Pressure (kPa)',style={'width': '200'}),
-                dcc.Input(
-                            id='input_2',
-                            type='number',
-                            value='10',
-                            min='1',
-                            style={'max-width': '150px'}
-                        ),
-
-    html.Label('Pressure 2 (kPa)',style={'width': '200'}),
-    html.Label('P2 should be > P1',style={'width': '300'}),
-                dcc.Input(
-                            id='input_3',
-                            type='number',
-                            value='12',
-                            min='2',
-                            style={'max-width': '150px'}
-                        ),
-
 
     html.Label(id='pump_temp_value'),
            dcc.Slider(
@@ -199,26 +179,6 @@ tab2_layout = html.Div([
                             min='1',
                             style={'max-width': '150px'}
                         ),
-
-    html.Label('Pressure (kPa)',style={'width': '200'}),
-                dcc.Input(
-                            id='input_2',
-                            type='number',
-                            value='10',
-                            min='1',
-                            style={'max-width': '150px'}
-                        ),
-
-    html.Label('Pressure 2 (kPa)',style={'width': '200'}),
-    html.Label('P2 should be > P1',style={'width': '300'}),
-                dcc.Input(
-                            id='input_3',
-                            type='number',
-                            value='12',
-                            min='2',
-                            style={'max-width': '150px'}
-                        ),
-
 
     html.Label(id='pump_temp_value'),
            dcc.Slider(
@@ -446,12 +406,10 @@ def compute_amount(slider_4):
     dash.dependencies.Input('slider_3', 'value'),
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
-    dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value'),
-    dash.dependencies.Input('input_3', 'value')
+    dash.dependencies.Input('input_1', 'value')
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     dff2 = dff[dff['T_1'] == slider_1]
@@ -459,13 +417,9 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     MFR = float(input_1)
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
-    PRESSURE_1=float(input_2)*1000
-    PRESSURE_2=float(input_3)*1000
-
-
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
 
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - (Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC']))
@@ -535,12 +489,10 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     dash.dependencies.Input('slider_3', 'value'),
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
-    dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value'),
-    dash.dependencies.Input('input_3', 'value')
+    dash.dependencies.Input('input_1', 'value')
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     dff2 = dff[dff['T_1'] == slider_1]
@@ -548,15 +500,12 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     MFR = float(input_1)
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
-    
-    PRESSURE_1=float(input_2)*1000
-    PRESSURE_2=float(input_3)*1000
 
 
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
-
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
+    
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - (Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC']))
 
@@ -603,12 +552,10 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
     dash.dependencies.Input('dropdown_4', 'value'),
-    dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value'),
-    dash.dependencies.Input('input_3', 'value')
+    dash.dependencies.Input('input_1', 'value')
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4, input_1, input_2, input_3):
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4, input_1):
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
@@ -623,12 +570,8 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4
 
     dff3 = dff2
 
-    PRESSURE_1=float(input_2)*1000
-    PRESSURE_2=float(input_3)*1000
-
-
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
 
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
@@ -701,20 +644,16 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4
     dash.dependencies.Input('slider_3', 'value'),
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
-    dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value'),
-    dash.dependencies.Input('input_3', 'value')
+    dash.dependencies.Input('input_1', 'value')
     ])
 
-def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
+def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
     if dropdown_3 is None:
         return dff3.to_dict('records')
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
-    PRESSURE_1=float(input_2)*1000
-    PRESSURE_2=float(input_3)*1000
-
+    
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
     x = float(slider_1)
@@ -725,7 +664,7 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
     
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
@@ -753,8 +692,8 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
     dff3['Pump Eff'] = Pump_Eff
     dff3['Turbine Eff'] = Turbine_Eff
     dff3['MFR'] = MFR
-    dff3['Pressure_1'] = PRESSURE_1/1000
-    dff3['Pressure_2'] = PRESSURE_2/1000
+    dff3['Pressure_1'] = dff3['P_1']/1000
+    dff3['Pressure_2'] = dff3['P_2']/1000
     dff3 = dff3.round(2)
 
     #
@@ -776,19 +715,15 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,in
             dash.dependencies.Input('slider_3', 'value'),
             dash.dependencies.Input('slider_4', 'value'),
             dash.dependencies.Input('dropdown_3', 'value'),
-            dash.dependencies.Input('input_1', 'value'),
-            dash.dependencies.Input('input_2', 'value'),
-            dash.dependencies.Input('input_3', 'value')
+            dash.dependencies.Input('input_1', 'value')
             ])
-def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1,input_2,input_3):
+def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
     if dropdown_3 is None:
         return dff3.to_dict('records')
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
-    PRESSURE_1=float(input_2)*1000
-    PRESSURE_2=float(input_3)*1000
-
+    
     Pump_Eff = float(slider_3)
     Turbine_Eff = float(slider_4)
     x = float(slider_1)
@@ -799,7 +734,7 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
     
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
@@ -827,8 +762,8 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
     dff3['Pump Eff'] = Pump_Eff
     dff3['Turbine Eff'] = Turbine_Eff
     dff3['MFR'] = MFR
-    dff3['Pressure_1'] = PRESSURE_1/1000
-    dff3['Pressure_2'] = PRESSURE_2/1000
+    dff3['Pressure_1'] = dff3['P_1']/1000
+    dff3['Pressure_2'] = dff3['P_2']/1000
     dff3 = dff3.round(2)
 
     #
@@ -854,12 +789,10 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
     dash.dependencies.Input('slider_4', 'value'),
     dash.dependencies.Input('dropdown_3', 'value'),
     dash.dependencies.Input('dropdown_5', 'value'),
-    dash.dependencies.Input('input_1', 'value'),
-    dash.dependencies.Input('input_2', 'value'),
-    dash.dependencies.Input('input_3', 'value')
+    dash.dependencies.Input('input_1', 'value')
     ])
 
-def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_5, input_1,input_2,input_3):
+def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_5, input_1):
 
     dff = df[df.REFRIGERANT.str.contains('|'.join(dropdown_3))]
     MFR = float(input_1)
@@ -874,12 +807,9 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_5
 
     dff3 = dff2
 
-    PRESSURE_1=float(input_2)*1000
-    PRESSURE_2=float(input_3)*1000
-
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(PRESSURE_2-PRESSURE_1)
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
 
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
