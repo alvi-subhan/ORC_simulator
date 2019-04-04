@@ -693,11 +693,11 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
     dff3['Turbine Eff'] = Turbine_Eff
     dff3['MFR'] = MFR
     dff3['Pressure_1'] = dff3['P_1']/1000
-    dff3['Pressure_2'] = dff3['P_2']/1000
+    dff3['Pressure_3'] = dff3['P_3']/1000
     dff3 = dff3.round(2)
 
     #
-    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure_1','Pressure_2', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
+    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure_1','Pressure_3', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
 
     dff3 = dff3.round(3)
     #xyz=='checking the global variable'
@@ -763,11 +763,11 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
     dff3['Turbine Eff'] = Turbine_Eff
     dff3['MFR'] = MFR
     dff3['Pressure_1'] = dff3['P_1']/1000
-    dff3['Pressure_2'] = dff3['P_2']/1000
+    dff3['Pressure_3'] = dff3['P_3']/1000
     dff3 = dff3.round(2)
 
     #
-    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure_1','Pressure_2', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
+    dff3 = dff3[['REFRIGERANT', 'MFR','Pressure_1','Pressure_3', 'T_1', 'T_3', 'Pump Eff', 'Turbine Eff', 'Turbine Power', 'Pump Power', 'Net Power','Heat Input', 'Efficiency']]
 
     dff3 = dff3.round(3)
     dff = dff3
