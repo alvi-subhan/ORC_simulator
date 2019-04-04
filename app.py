@@ -20,7 +20,7 @@ app.title = "ORC Simulator"
 
 
 df = pd.read_csv('refrigerant_data.csv')
-df2 = df[['REFRIGERANT', 'T_1_K', 'T_3_K', 'H_1', 'H_2_ISENTROPIC', 'H_3', 'H_4_ISENTROPIC','SPECIFIC_VOLUME','P_1','P_2']]
+df2 = df[['REFRIGERANT', 'T_1_K', 'T_3_K', 'H_1', 'H_2_ISENTROPIC', 'H_3', 'H_4_ISENTROPIC','SPECIFIC_VOLUME','P_1','P_3']]
 df2 = df2.round(2)
 
 
@@ -419,7 +419,7 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
     Turbine_Eff = float(slider_4)
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_3']-dff3['P_1'])/1000
 
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - (Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC']))
@@ -504,7 +504,7 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
 
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_3']-dff3['P_1'])/1000
     
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - (Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC']))
@@ -571,7 +571,7 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_4
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_3']-dff3['P_1'])/1000
 
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
@@ -664,7 +664,7 @@ def display_table(slider_1, slider_2, slider_3, slider_4, dropdown_3, input_1):
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_3']-dff3['P_1'])/1000
     
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
@@ -734,7 +734,7 @@ def update_download_link(slider_1, slider_2, slider_3, slider_4, dropdown_3, inp
     dff3 = dff2
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_3']-dff3['P_1'])/1000
     
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
@@ -809,7 +809,7 @@ def produce_graph(slider_1, slider_2, slider_3, slider_4, dropdown_3, dropdown_5
 
 
     #CALCULATES ENTHALPY AT STATE 2
-    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_2']-dff3['P_1'])/1000
+    dff3['H_2'] = dff3['H_1'] +dff3['SPECIFIC_VOLUME']*(dff3['P_3']-dff3['P_1'])/1000
 
     #CALCULATES ENTHALPY AT STATE 4
     dff3['H_4'] = (dff3['H_3'] - ((Turbine_Eff / 100) * (dff3['H_3'] - dff3['H_4_ISENTROPIC'])))
